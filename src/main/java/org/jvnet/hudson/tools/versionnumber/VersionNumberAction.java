@@ -7,10 +7,17 @@ public class VersionNumberAction implements Action {
     
     private VersionNumberBuildInfo info;
     private String versionNumber;
+    private String versionCode;
     
     public VersionNumberAction(VersionNumberBuildInfo info, String versionNumber) {
         this.info = info;
         this.versionNumber = versionNumber;
+    }
+    
+    public VersionNumberAction(VersionNumberBuildInfo info, String versionNumber, String versionCode) {
+        this.info = info;
+        this.versionNumber = versionNumber;
+        this.versionCode = versionCode;
     }
     
     public VersionNumberBuildInfo getInfo() {
@@ -21,7 +28,11 @@ public class VersionNumberAction implements Action {
 	return this.versionNumber;
     }
 
-    public String getDisplayName() {
+    public String getVersionCode() {
+		return versionCode;
+	}
+
+	public String getDisplayName() {
         return "Version " + this.versionNumber;
     }
 

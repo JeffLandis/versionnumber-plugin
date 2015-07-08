@@ -5,6 +5,12 @@
   <f:entry title="Version Number Format String" help="/plugin/versionnumber/help-versionNumberFormatString.html">
     <f:textbox field="versionNumberString" />
   </f:entry>
+  <f:entry title="Version Code Environment Variable Name" help="/plugin/versionnumber/help-versionCodeEnvironmentVariableName.html">
+    <f:textbox field="versionCodeEnvironmentVariableName" />
+  </f:entry>
+  <f:entry title="Version Code Format String" help="/plugin/versionnumber/help-versionCodeFormatString.html">
+    <f:textbox field="versionCodeString" />
+  </f:entry>
   <f:entry title="Prefix Variable" help="/plugin/versionnumber/help-environmentPrefixVariable.html">
     <f:textbox field="environmentPrefixVariable" />
   </f:entry>

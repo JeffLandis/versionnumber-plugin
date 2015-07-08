@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -53,6 +54,8 @@ public class VersionNumberBuilder extends BuildWrapper {
     private final Date projectStartDate;
     private final String environmentVariableName;
     private final String environmentPrefixVariable;
+    private final String versionCodeEnvironmentVariableName;
+    private final String versionCodeString;
     
     private int oBuildsToday;
     private int oBuildsThisMonth;
@@ -66,13 +69,16 @@ public class VersionNumberBuilder extends BuildWrapper {
             String projectStartDate,
             String environmentVariableName,
             String environmentPrefixVariable,
+            String versionCodeEnvironmentVariableName,
+            String versionCodeString,
             String buildsToday,
             String buildsThisMonth,
             String buildsThisYear,
             String buildsAllTime,
             boolean skipFailedBuilds) {
         this(versionNumberString, projectStartDate, environmentVariableName,
-                environmentPrefixVariable, buildsToday, buildsThisMonth,
+                environmentPrefixVariable, versionCodeEnvironmentVariableName,
+                versionCodeString, buildsToday, buildsThisMonth,
                 buildsThisYear, buildsAllTime, skipFailedBuilds, false);
     }
     
@@ -81,6 +87,8 @@ public class VersionNumberBuilder extends BuildWrapper {
                                 String projectStartDate,
                                 String environmentVariableName,
                                 String environmentPrefixVariable,
+                                String versionCodeEnvironmentVariableName,
+                                String versionCodeString,
                                 String buildsToday,
                                 String buildsThisMonth,
                                 String buildsThisYear,
@@ -91,6 +99,8 @@ public class VersionNumberBuilder extends BuildWrapper {
         this.projectStartDate = parseDate(projectStartDate);
         this.environmentVariableName = environmentVariableName;
         this.environmentPrefixVariable = environmentPrefixVariable;
+        this.versionCodeEnvironmentVariableName = versionCodeEnvironmentVariableName;
+        this.versionCodeString = versionCodeString;
         this.skipFailedBuilds = skipFailedBuilds;
         this.useAsBuildDisplayName = useAsBuildDisplayName;
         
@@ -165,7 +175,16 @@ public class VersionNumberBuilder extends BuildWrapper {
     public String getEnvironmentPrefixVariable() {
         return this.environmentPrefixVariable;
     }
-    private Run getPreviousBuildWithVersionNumber(AbstractBuild build) {
+    
+    public String getVersionCodeEnvironmentVariableName() {
+		return versionCodeEnvironmentVariableName;
+	}
+
+	public String getVersionCodeString() {
+		return versionCodeString;
+	}
+
+	private Run getPreviousBuildWithVersionNumber(AbstractBuild build) {
         String envPrefix;
         
         if (this.environmentPrefixVariable != null) {
@@ -394,6 +413,7 @@ public class VersionNumberBuilder extends BuildWrapper {
     @SuppressWarnings("unchecked") @Override
     public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) {
         String formattedVersionNumber = "";
+        String formattedVersionCode = "";
         try {
             VersionNumberBuildInfo info = incBuild(build, listener.getLogger());
             formattedVersionNumber = formatVersionNumber(this.versionNumberString,
@@ -403,7 +423,19 @@ public class VersionNumberBuilder extends BuildWrapper {
                                                          build.getTimestamp(),
                                                          listener.getLogger()
                                                          );
-            build.addAction(new VersionNumberAction(info, formattedVersionNumber));
+            if (StringUtils.isNotBlank(this.versionCodeString))
+            {
+            	formattedVersionCode = formatVersionNumber(this.versionCodeString,
+            											   this.projectStartDate,
+            											   info,
+            											   build.getEnvironment(listener),
+            											   build.getTimestamp(),
+            											   listener.getLogger()
+            											   );
+            	build.addAction(new VersionNumberAction(info, formattedVersionNumber, formattedVersionCode));
+            } else {
+            	build.addAction(new VersionNumberAction(info, formattedVersionNumber));
+            }
             if (useAsBuildDisplayName) {
                 build.setDisplayName(formattedVersionNumber);
             }
@@ -420,10 +452,15 @@ public class VersionNumberBuilder extends BuildWrapper {
             build.setResult(Result.FAILURE);
         }
         final String finalVersionNumber = formattedVersionNumber;
+        final String finalVersionCode = formattedVersionCode;
         return new Environment() {
             @Override
             public void buildEnvVars(Map<String, String> env) {
                 env.put(environmentVariableName, finalVersionNumber);
+                if (StringUtils.isNotBlank(versionCodeEnvironmentVariableName))
+                {
+                	env.put(versionCodeEnvironmentVariableName, finalVersionCode);
+                }
             }
         };
     }
